@@ -10,4 +10,12 @@
 - **Deployment:** Vercel (frontend) + Render (backend)
 
 ## Setup
-Coming soon.
+## Setup
+
+\`\`\`bash
+cd frontend
+npm install
+npm run dev
+\`\`\`
+
+Visit http://localhost:5173

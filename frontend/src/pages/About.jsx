@@ -9,7 +9,7 @@ export default function About() {
         Nest is a direct booking platform for rural homestay operators in
         Uttarakhand. We're starting with the Trishul Eco-Homestays Network
         near Chopta — a cluster of community-run homestays that currently
-        depend entirely on OTAs charging 18–25% commission per booking. This
+        depend entirely on OTAs charging 18–20% commission per booking. This
         page is a placeholder; the full story, host profiles, and impact
         numbers will be added as the project develops.
       </p>

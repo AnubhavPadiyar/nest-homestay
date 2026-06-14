@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-paper text-ink font-body antialiased;
+}
+
+/* Visible keyboard focus ring across the app */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible {
+  outline: 2px solid #c1714a;
+  outline-offset: 2px;
+}

@@ -1,70 +1,48 @@
-const express = require("express")
-const router = express.Router()
-const { properties } = require("../data/store")
+const express  = require("express")
+const router   = express.Router()
+const Property = require("../models/Property")
 
-/**
- * GET /api/properties
- * Returns all properties. Optionally filter by ?available=true
- */
-router.get("/", (req, res) => {
-  let result = [...properties]
+// GET /api/properties?available=true
+router.get("/", async (req, res, next) => {
+  try {
+    const filter = {}
+    if (req.query.available !== undefined)
+      filter.available = req.query.available === "true"
 
-  const { available } = req.query
-  if (available !== undefined) {
-    result = result.filter((p) => p.available === (available === "true"))
-  }
-
-  res.status(200).json({
-    success: true,
-    count: result.length,
-    data: result,
-  })
+    const properties = await Property.find(filter).sort({ createdAt: -1 })
+    res.status(200).json({ success: true, count: properties.length, data: properties })
+  } catch (err) { next(err) }
 })
 
-/**
- * GET /api/properties/search?q=<query>
- * Search properties by name, location, or host name
- */
-router.get("/search", (req, res) => {
-  const q = (req.query.q || "").toLowerCase().trim()
-
-  if (!q) {
-    return res.status(400).json({
-      success: false,
-      error: { status: 400, message: "Query parameter 'q' is required" },
+// GET /api/properties/search?q=
+router.get("/search", async (req, res, next) => {
+  try {
+    const q = (req.query.q || "").trim()
+    if (!q) {
+      const err = new Error("Query parameter 'q' is required")
+      err.status = 400; return next(err)
+    }
+    const regex = new RegExp(q, "i")
+    const results = await Property.find({
+      $or: [{ name: regex }, { location: regex }, { host: regex }, { amenities: regex }],
     })
-  }
-
-  const results = properties.filter(
-    (p) =>
-      p.name.toLowerCase().includes(q) ||
-      p.location.toLowerCase().includes(q) ||
-      p.host.toLowerCase().includes(q) ||
-      p.amenities.some((a) => a.toLowerCase().includes(q))
-  )
-
-  res.status(200).json({
-    success: true,
-    count: results.length,
-    query: q,
-    data: results,
-  })
+    res.status(200).json({ success: true, count: results.length, query: q, data: results })
+  } catch (err) { next(err) }
 })
 
-/**
- * GET /api/properties/:id
- * Returns a single property by ID
- */
-router.get("/:id", (req, res, next) => {
-  const property = properties.find((p) => p.id === req.params.id)
-
-  if (!property) {
-    const err = new Error(`Property with id '${req.params.id}' not found`)
-    err.status = 404
-    return next(err)
+// GET /api/properties/:id
+router.get("/:id", async (req, res, next) => {
+  try {
+    const property = await Property.findById(req.params.id)
+    if (!property) {
+      const err = new Error(`Property '${req.params.id}' not found`)
+      err.status = 404; return next(err)
+    }
+    res.status(200).json({ success: true, data: property })
+  } catch (err) {
+    if (err.name === "CastError") { err.status = 404; err.message = "Invalid property ID" }
+    next(err)
   }
-
-  res.status(200).json({ success: true, data: property })
 })
 
 module.exports = router

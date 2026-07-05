@@ -1,37 +1,28 @@
+import { useState, useEffect } from 'react'
 import Hero from '../components/Hero'
 import Card from '../components/Card'
+import { Loader, useToast } from '../components/ui'
 
-const FEATURED_STAYS = [
-  {
-    image: '#5B7F66',
-    eyebrow: '30.4500° N · 79.2000° E — Chopta, 2,608m',
-    title: 'Riverside Pine Cottage',
-    description:
-      'A two-room stone cottage above the Madhyamaheshwar stream, run by the Negi family for three generations.',
-    meta: '₹1,800 / night',
-    actionLabel: 'View stay',
-  },
-  {
-    image: '#C1714A',
-    eyebrow: '30.4380° N · 79.1850° E — Sari Village, 1,920m',
-    title: 'Maa Mandakini Homestay',
-    description:
-      'Home-cooked Garhwali meals, a sunny courtyard, and a short walk to the start of the Deoria Tal trail.',
-    meta: '₹1,200 / night',
-    actionLabel: 'View stay',
-  },
-  {
-    image: '#D9A441',
-    eyebrow: '30.4900° N · 79.2200° E — Tungnath Ridge, 2,680m',
-    title: 'Tungnath View Retreat',
-    description:
-      'Wake up to the Chandrashila ridgeline. Three rooms, a wood-fired bukhari, and resident guide on call.',
-    meta: '₹2,200 / night',
-    actionLabel: 'View stay',
-  },
-]
+const COLOR_MAP = ['#5B7F66', '#C1714A', '#D9A441', '#5B7F66', '#C1714A']
 
 export default function Home() {
+  const [properties, setProperties] = useState([])
+  const [loading, setLoading]       = useState(true)
+  const { showToast } = useToast()
+
+  useEffect(() => {
+    fetch('http://localhost:5000/api/properties')
+      .then((r) => r.json())
+      .then((data) => {
+        setProperties(data.data)
+        setLoading(false)
+      })
+      .catch(() => {
+        showToast({ message: 'Failed to load properties. Is the backend running?', type: 'error' })
+        setLoading(false)
+      })
+  }, [])
+
   return (
     <main>
       <Hero />
@@ -42,17 +33,36 @@ export default function Home() {
             <p className="font-mono text-xs uppercase tracking-[0.2em] text-moss">
               Featured stays
             </p>
-            <h2 className="mt-2 font-display text-3xl font-semibold text-forest sm:text-4xl">
+            <h2 className="mt-2 font-display text-3xl font-semibold text-forest dark:text-paper sm:text-4xl">
               Homes along the ridge
             </h2>
           </div>
+          {!loading && (
+            <p className="font-mono text-xs text-ink/40 dark:text-paper/40">
+              {properties.length} properties
+            </p>
+          )}
         </div>
 
-        <div className="mt-8 grid gap-6 sm:grid-cols-2 md:grid-cols-3">
-          {FEATURED_STAYS.map((stay) => (
-            <Card key={stay.title} {...stay} />
-          ))}
-        </div>
+        {loading ? (
+          <div className="mt-12 flex justify-center">
+            <Loader size="lg" />
+          </div>
+        ) : (
+          <div className="mt-8 grid gap-6 sm:grid-cols-2 md:grid-cols-3">
+            {properties.map((p, i) => (
+              <Card
+                key={p._id}
+                image={COLOR_MAP[i % COLOR_MAP.length]}
+                eyebrow={`${p.location} · ${p.altitude}m`}
+                title={p.name}
+                description={p.description}
+                meta={`₹${p.pricePerNight.toLocaleString()} / night`}
+                actionLabel={p.available ? 'View stay' : 'Unavailable'}
+              />
+            ))}
+          </div>
+        )}
       </section>
     </main>
   )
